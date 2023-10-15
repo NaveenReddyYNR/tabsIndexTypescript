@@ -1,0 +1,28 @@
+const tabsData = [
+    {
+      label: `Players (${playersDataCount})`,
+      content: playersContent,
+    },
+  ];
+  if (coachLicenseDataCount > 0) {
+    tabsData.push({
+      label: `Coach License (${coachLicenseDataCount})`,
+      content: coachLicenseContent,
+    });
+  }
+  if (playerPackDataCount > 0) {
+    tabsData.push({
+      label: `Player Pack (${playerPackDataCount})`,
+      content: playerPackContent,
+    });
+  } 
+
+
+
+
+
+   <WalletTabs
+                            tabsData={tabsData}
+                            activeTabIndex={activeTabIndex}
+                            setActiveTabIndex={setActiveTabIndex}
+                          />
