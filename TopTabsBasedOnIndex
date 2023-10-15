@@ -1,0 +1,171 @@
+import React, { useState, useRef, useEffect } from "react";
+import { Button } from "..";
+
+interface WalletTab {
+  label: string;
+  content: any;
+}
+
+interface WalletTabsProps {
+  tabsData: WalletTab[];
+  activeTabIndex: number;
+  setActiveTabIndex: React.Dispatch<React.SetStateAction<number>>;
+}
+
+const WalletTabs: React.FC<WalletTabsProps> = ({
+  tabsData,
+  activeTabIndex,
+  setActiveTabIndex,
+}) => {
+  const [pageIndex, setPageIndex] = useState(0);
+  const cardsPerPage = 12;
+  const maxVisiblePages = 1;
+
+  const [tabUnderlineWidth, setTabUnderlineWidth] = useState(0);
+  const [tabUnderlineLeft, setTabUnderlineLeft] = useState(0);
+  const tabsRef = useRef<HTMLButtonElement[]>([]);
+  const cardContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function setTabPosition() {
+      const currentTab = tabsRef.current[activeTabIndex];
+      if (currentTab) {
+        const { offsetLeft, clientWidth } = currentTab;
+        setTabUnderlineLeft(offsetLeft);
+        setTabUnderlineWidth(clientWidth + 4);
+      }
+    }
+    setTabPosition();
+    window.addEventListener("resize", setTabPosition);
+    return () => {
+      window.removeEventListener("resize", setTabPosition);
+    };
+  }, [activeTabIndex]);
+
+  const handleNextPage = () => {
+    if (
+      pageIndex <
+      Math.ceil(tabsData[activeTabIndex]?.content.length / cardsPerPage) - 1
+    ) {
+      setPageIndex(pageIndex + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (pageIndex > 0) {
+      setPageIndex(pageIndex - 1);
+    }
+  };
+
+  const activeTabContent =
+    tabsData[activeTabIndex]?.content instanceof Array
+      ? tabsData[activeTabIndex]?.content
+      : [];
+
+  const isMoreThan15Cards = activeTabContent.length > cardsPerPage;
+
+  const handleTabClick = (idx) => {
+    sessionStorage.setItem("selectedTabIndex", idx);
+
+    setActiveTabIndex(idx);
+    setPageIndex(0);
+  };
+
+  // Calculate the range of page numbers to display
+  const totalPages = Math.ceil(activeTabContent.length / cardsPerPage);
+  const startPage =
+    pageIndex - Math.floor(maxVisiblePages / 2) < 0
+      ? 0
+      : pageIndex + Math.floor(maxVisiblePages / 2) >= totalPages
+      ? totalPages - maxVisiblePages
+      : pageIndex - Math.floor(maxVisiblePages / 2);
+
+  return (
+    <div>
+      <div className="relative">
+        <div className="flex space-x-5 border-b-[0.27rem]  sm:whitespace-nowrap sm:space-x-4 border-[#42446a]">
+          {tabsData.map((tab, idx) => (
+            <button
+              key={idx}
+              ref={(el) => (tabsRef.current[idx] = el)}
+              className={`pt-2 pb-3 text-[15px] sm:text-[13px] font-Gibson ${
+                activeTabIndex === idx ? "text-white-A700" : "text-white-A700"
+              } ${
+                activeTabIndex === idx
+                  ? "font-[700] sm:font-[600]"
+                  : "font-[400]"
+              } ${
+                activeTabIndex === idx
+                  ? "opacity-[100%]"
+                  : "opacity-[70%] sm:opacity-[60%]"
+              }`}
+              onClick={() => handleTabClick(idx)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <span
+          className={`bg-gradient-to-r from-[#4E9BBE] to-[#7CEB8D] absolute -bottom-[2px] block h-2  transition-all duration-300 rounded-lg`}
+          style={{
+            left: tabUnderlineLeft,
+            width: tabUnderlineWidth,
+          }}
+        />
+      </div>
+      <div className="py-4 sm:py-1">
+        <div
+          className={`grid grid-cols-3 gap-5 sm:grid-cols-1 sm1:grid-cols-1 md:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3 items-end`}
+          ref={cardContainerRef}
+        >
+          {activeTabContent
+            .slice(pageIndex * cardsPerPage, (pageIndex + 1) * cardsPerPage)
+            .map((cardContent, cardIndex) => (
+              <div key={cardIndex}>{cardContent}</div>
+            ))}
+        </div>
+        <div className="flex flex-row justify-center items-end gap-10 text-white-A700 h-[42px] w-[100%] mt-10">
+          {isMoreThan15Cards && (
+            <div className="flex flex-row rounded-[50px] justify-between items-center gap-10 text-white-A700 border border-[#371A87] h-[42px] w-[30%] sm:w-[100%] md:w-[60%]">
+              <span
+                className="text-center cursor-pointer flex items-center"
+                onClick={handlePreviousPage}
+              >
+                <Button className="pl-4 pr-4 w-fit h-[25px] font-Gibson font-[600] text-[16px]  text-center leading-4">
+                  &lt; Prev
+                </Button>
+              </span>
+              <div className="flex justify-around gap-4">
+                {Array.from({ length: maxVisiblePages }, (_, index) => {
+                  const pageNumber = startPage + index + 1;
+                  return (
+                    <span
+                      key={pageNumber}
+                      className={
+                        pageIndex + 1 === pageNumber ? "active-page" : ""
+                      }
+                    >
+                      {pageNumber}
+                    </span>
+                  );
+                })}
+              </div>
+              {isMoreThan15Cards && (
+                <div
+                  className="text-center cursor-pointer"
+                  onClick={handleNextPage}
+                >
+                  <Button className="pl-4 pr-4 w-fit h-[25px] font-Gibson font-[600] text-[16px]  text-center leading-4">
+                    Next &gt;
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default WalletTabs;
